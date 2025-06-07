@@ -14,7 +14,7 @@ export const getFavorit = async (req, res) => {
                 },
                 {
                     model: Destinasi,
-                    attributes: ['id_destinasi', 'nama_destinasi']
+                    attributes: ['id_destinasi', 'nama_destinasi', 'deskripsi'] // Tambahkan deskripsi
                 }
             ]
         });
@@ -33,7 +33,7 @@ export const getFavoritByPenggunaId = async (req, res) => {
             },
             include: [{
                 model: Destinasi,
-                attributes: ['id_destinasi', 'nama_destinasi', 'url_gambar', 'lokasi']
+                attributes: ['id_destinasi', 'nama_destinasi', 'deskripsi', 'url_gambar', 'lokasi'] // Tambahkan deskripsi
             }]
         });
         res.json(favorit);
@@ -94,7 +94,7 @@ export const getDestinasiTerfavorit = async (req, res) => {
             ],
             include: [{
                 model: Destinasi,
-                attributes: ['nama_destinasi', 'url_gambar']
+                attributes: ['nama_destinasi', 'deskripsi', 'url_gambar'] // Tambahkan deskripsi
             }],
             group: ['id_destinasi'],
             order: [[Sequelize.literal('jumlah_favorit'), 'DESC']],
