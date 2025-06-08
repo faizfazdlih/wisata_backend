@@ -6,13 +6,15 @@ import {
   getDestinasiById,
   createDestinasi,
   updateDestinasi,
-  deleteDestinasi
+  deleteDestinasi,
+  getDestinasiStats
 } from '../controllers/DestinasiController.js';
 
 const router = express.Router();
 
 // Endpoint publik, semua user bisa lihat destinasi
 router.get('/', getAllDestinasi);
+router.get('/stats', getDestinasiStats);
 router.get('/:id', getDestinasiById);
 
 // Endpoint yang perlu login sebagai admin

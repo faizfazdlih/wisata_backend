@@ -1,5 +1,7 @@
 import Destinasi from '../models/DestinasiModel.js';
 import Kategori from '../models/KategoriModel.js';
+import Ulasan from '../models/UlasanModel.js';
+import { Sequelize } from 'sequelize';
 
 // Get semua destinasi dengan kategori
 export const getAllDestinasi = async (req, res) => {
@@ -191,5 +193,99 @@ export const deleteDestinasi = async (req, res) => {
     } catch (error) {
         console.error('Error delete destinasi:', error);
         res.status(500).json({ message: "Terjadi kesalahan internal server" });
+    }
+};
+
+// Get statistik destinasi (jumlah total dan rating rata-rata)
+export const getDestinasiStats = async (req, res) => {
+    try {
+        // Hitung total destinasi
+        const totalDestinasi = await Destinasi.count();
+        
+        // Ambil semua destinasi dengan kategori
+        const allDestinasi = await Destinasi.findAll({
+            attributes: ['id_destinasi', 'id_kategori'],
+            include: [{
+                model: Kategori,
+                attributes: ['id_kategori', 'nama_kategori']
+            }]
+        });
+        
+        // Dapatkan semua ID destinasi
+        const destinasiIds = allDestinasi.map(d => d.id_destinasi);
+        
+        // Hitung jumlah destinasi per kategori
+        const destinasiPerKategori = await Destinasi.findAll({
+            attributes: ['id_kategori', [Sequelize.fn('COUNT', Sequelize.col('id_destinasi')), 'jumlah']],
+            include: [{
+                model: Kategori,
+                attributes: ['id_kategori', 'nama_kategori']
+            }],
+            group: ['id_kategori']
+        });
+        
+        // Ambil data ulasan untuk semua destinasi
+        const ulasanData = await Ulasan.findAll({
+            attributes: ['id_destinasi', 'penilaian'],
+            where: {
+                id_destinasi: destinasiIds
+            },
+            include: [{
+                model: Destinasi,
+                attributes: ['id_kategori']
+            }]
+        });
+        
+        // Hitung rating rata-rata keseluruhan
+        let totalRating = 0;
+        let totalUlasan = 0;
+        
+        // Hitung rating per kategori
+        const ratingPerKategori = {};
+        const ulasanPerKategori = {};
+        
+        ulasanData.forEach(ulasan => {
+            const idKategori = ulasan.destinasi.id_kategori;
+            
+            // Untuk rating keseluruhan
+            totalRating += ulasan.penilaian;
+            totalUlasan++;
+            
+            // Untuk rating per kategori
+            if (!ratingPerKategori[idKategori]) {
+                ratingPerKategori[idKategori] = 0;
+                ulasanPerKategori[idKategori] = 0;
+            }
+            
+            ratingPerKategori[idKategori] += ulasan.penilaian;
+            ulasanPerKategori[idKategori]++;
+        });
+        
+        // Hitung rata-rata per kategori
+        const kategoriStats = [];
+        Object.keys(ratingPerKategori).forEach(idKategori => {
+            const rataRata = ulasanPerKategori[idKategori] > 0 
+                ? (ratingPerKategori[idKategori] / ulasanPerKategori[idKategori]).toFixed(1) 
+                : '0.0';
+                
+            kategoriStats.push({
+                id_kategori: parseInt(idKategori),
+                rating_rata_rata: rataRata,
+                jumlah_ulasan: ulasanPerKategori[idKategori]
+            });
+        });
+        
+        const stats = {
+            total_destinasi: totalDestinasi,
+            destinasi_per_kategori: destinasiPerKategori,
+            rating_rata_rata: totalUlasan > 0 ? (totalRating / totalUlasan).toFixed(1) : '0.0',
+            jumlah_ulasan: totalUlasan,
+            rating_per_kategori: kategoriStats
+        };
+        
+        res.status(200).json(stats);
+    } catch (error) {
+        console.error('Error get destinasi stats:', error);
+        res.status(500).json({ message: error.message });
     }
 };
