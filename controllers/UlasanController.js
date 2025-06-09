@@ -72,19 +72,59 @@ export const createUlasan = async (req, res) => {
     }
 };
 
-// Hapus ulasan
+// Hapus ulasan oleh pengguna yang membuatnya
+export const deleteUlasanByUser = async (req, res) => {
+    try {
+        const ulasan = await Ulasan.findOne({
+            where: {
+                id_ulasan: req.params.id,
+                id_pengguna: req.userId // Pastikan ulasan milik pengguna yang sedang login
+            }
+        });
+
+        if (!ulasan) {
+            return res.status(404).json({ message: "Ulasan tidak ditemukan atau Anda tidak memiliki izin" });
+        }
+
+        await Ulasan.destroy({
+            where: {
+                id_ulasan: req.params.id,
+                id_pengguna: req.userId
+            }
+        });
+        
+        res.json({
+            message: "Ulasan berhasil dihapus"
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Hapus ulasan (untuk admin)
 export const deleteUlasan = async (req, res) => {
     try {
+        const ulasan = await Ulasan.findOne({
+            where: {
+                id_ulasan: req.params.id
+            }
+        });
+
+        if (!ulasan) {
+            return res.status(404).json({ message: "Ulasan tidak ditemukan" });
+        }
+
         await Ulasan.destroy({
             where: {
                 id_ulasan: req.params.id
             }
         });
+        
         res.json({
             message: "Ulasan berhasil dihapus"
         });
     } catch (error) {
-        res.json({ message: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 

@@ -158,3 +158,41 @@ export const deletePengguna = async (req, res) => {
         res.json({ message: error.message });
     }
 };
+
+// Update profil pengguna yang sedang login
+export const updateProfile = async (req, res) => {
+    try {
+        // Jika ada kata sandi baru, hash kata sandi
+        if (req.body.kata_sandi) {
+            const salt = await bcrypt.genSalt(10);
+            req.body.kata_sandi = await bcrypt.hash(req.body.kata_sandi, salt);
+        }
+        
+        await Pengguna.update(req.body, {
+            where: {
+                id_pengguna: req.userId
+            }
+        });
+        res.json({
+            message: "Profil berhasil diperbarui"
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// Hapus profil pengguna yang sedang login
+export const deleteProfile = async (req, res) => {
+    try {
+        await Pengguna.destroy({
+            where: {
+                id_pengguna: req.userId
+            }
+        });
+        res.json({
+            message: "Akun berhasil dihapus"
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

@@ -6,7 +6,9 @@ import {
     deletePengguna,
     register,
     login,
-    getProfile
+    getProfile,
+    updateProfile,
+    deleteProfile
 } from '../controllers/PenggunaController.js';
 import { verifyToken, verifyAdmin } from '../middleware/AuthMiddleware.js';
 
@@ -18,6 +20,8 @@ router.post('/login', login);
 
 // Rute yang memerlukan autentikasi
 router.get('/profile', verifyToken, getProfile);
+router.patch('/profile', verifyToken, updateProfile); // Rute baru untuk update profil
+router.delete('/profile', verifyToken, deleteProfile); // Rute baru untuk hapus profil
 
 // Rute admin
 router.get('/pengguna', verifyAdmin, getPengguna);
